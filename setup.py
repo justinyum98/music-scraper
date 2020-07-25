@@ -28,5 +28,9 @@ setup(
 
     keywords='music',
 
+    packages=find_packages(include=['music_scraper']),
+
+    include_package_data=True,
+
     python_requires='>=3.7'
 )
