@@ -3,4 +3,4 @@ class MusicScraper():
         self.foo = 'bar'
 
     def get_foo(self):
-        return self.foo'
+        return self.foo
