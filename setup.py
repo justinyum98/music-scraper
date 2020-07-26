@@ -24,6 +24,7 @@ setup(
     install_requires=[
         'requests>=2.22.0',
         'beautifulsoup4>=4.9.1',
+        'python-dateutil>=2.8.1'
     ],
 
     keywords='music',
