@@ -20,10 +20,22 @@ class MusicScraperTester(TestCase):
     def test_get_top_artists_names(self):
         """Can get all the names of the artists who've reached Billboard's Artist 100 list in the last X weeks."""
 
-        top_artists_list: Set[str] = self.music_scraper.get_top_artists_names()
+        top_artists_list: Set[str] = self.music_scraper.get_top_artists_names(2)
 
         self.assertIsNotNone(top_artists_list)
 
+    def test_get_artists_spotify_ids(self):
+        """Given multiple artist names, can get the artists' respective Spotify IDs."""
+
+        # Get the artists names.
+        top_artists_list: Set[str] = self.music_scraper.get_top_artists_names(2)
+
+        # Grab the artists' Spotify IDs.
+        artists_spotify_ids: dict = self.music_scraper.get_artists_spotify_ids(
+            artist_names=top_artists_list
+        )
+
+        self.assertIsNotNone(artists_spotify_ids)
 
 if __name__ == '__main__':
     unittest.main()
