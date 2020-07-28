@@ -65,8 +65,12 @@ class MusicScraper():
         else:
             print('Error {}: {}'.format(response.status_code, response.text))
 
-    def get_top_artists_names(self, last_x_weeks=1) -> Set[str]:
+    def get_top_artists_names(self, last_x_weeks=2) -> Set[str]:
         """Get all the names of the artists who've reached Billboard's Artist 100 list in the last X months.
+
+        Arguments:
+        ----------
+        last_x_weeks {int} -- The number of weeks to go back on the charts (Default: 2)
 
         Returns:
         --------

@@ -18,4 +18,7 @@ class SpotifyParser():
         # (3) Grab the artist's genre(s).
         artist_data['genres'] = response_data['genres']
 
+        # (4) Grab the artist's ID.
+        artist_data['spotify_id'] = response_data['id']
+
         return artist_data
