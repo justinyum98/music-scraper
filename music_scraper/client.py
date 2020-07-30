@@ -6,9 +6,8 @@ from datetime import date
 from datetime import datetime
 from dateutil.relativedelta import *
 
-from music_scraper.spotify_parser import SpotifyParser
-
 from typing import Set
+from typing import List
 from bs4 import Tag
 
 
@@ -18,13 +17,8 @@ class MusicScraper():
         self._billboard_base_url = 'https://www.billboard.com'
         self._artist_charts = self._billboard_base_url + '/charts/artist-100'
 
-        # Spotify Parser
-        self._spotify_parser = SpotifyParser()
-
         # Spotify URLs
         self._spotify_base_url = 'https://api.spotify.com/v1'
-        self._search_endpoint = self._spotify_base_url + '/search'
-        self._get_artist_endpoint = self._spotify_base_url + '/artists'
 
         # Spotify Auth URLs
         self._spotify_auth_base_url = 'https://accounts.spotify.com/api'
@@ -139,9 +133,11 @@ class MusicScraper():
             # Make artist name URL safe.
             url_safe_artist_name = artist_name.replace(' ', '+')
 
+            full_url = self._spotify_base_url + '/search'
+
             # Grab the response
             response = requests.get(
-                url=self._search_endpoint,
+                url=full_url,
                 params={
                     'q': url_safe_artist_name,
                     'type': 'artist'
@@ -173,8 +169,8 @@ class MusicScraper():
 
         return artists_spotify_ids
 
-    def get_artist_by_id(self, spotify_id: str) -> dict:
-        """Given an artist's Spotify ID, get the artist's data.
+    def get_artist_data_by_id(self, spotify_id: str) -> dict:
+        """Given an artist's Spotify ID, get the artist's data (including albums and tracks).
 
         https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-an-artist
 
@@ -188,7 +184,7 @@ class MusicScraper():
         """
 
         # Attach ID to URL.
-        full_url = self._get_artist_endpoint + '/{}'.format(spotify_id)
+        full_url = self._spotify_base_url + '/artists/{}'.format(spotify_id)
 
         # Grab the response
         response = requests.get(
@@ -197,16 +193,122 @@ class MusicScraper():
                 'Authorization': 'Bearer {}'.format(self._spotify_access_token)
             }
         )
+        print('URL REQUESTED: {}'.format(response.url))
 
         if response.ok:
             # Grab the response data.
             response_data = response.json()
 
             # Parse the artist data.
-            artist_data = self._spotify_parser.parse_artist_data(
+            artist_data = self._parse_artist_data(
                 response_data=response_data
             )
 
             return artist_data
         else:
             print('Error {}: {}'.format(response.status_code, response.text))
+
+    def _parse_artist_data(self, response_data: dict) -> dict:
+        """Given a Spotify Artist object, grab the data you need.
+
+        https://developer.spotify.com/documentation/web-api/reference/object-model/#artist-object-full
+        """
+        artist_data = response_data
+
+        # Grab the artist's albums (tracks included)
+        artist_data['albums'] = self.get_artist_albums_by_id(
+            response_data['id'])
+
+        return artist_data
+
+    def get_artist_albums_by_id(self, spotify_id: str) -> dict:
+        """Given an artist's Spotify ID, get their albums + singles (including the tracks).
+
+        Arguments:
+        ----------
+        spotify_id {str} -- The artist's Spotify ID
+
+        Returns:
+        --------
+        List[dict] -- A list of the artist's albums
+        """
+
+        # Attach ID to URL.
+        full_url = 'https://api.spotify.com/v1/artists/{}/albums'.format(
+            spotify_id)
+
+        # Grab the response.
+        response = requests.get(
+            url=full_url,
+            params={
+                'include_groups': 'album,single',
+                'limit': 50
+            },
+            headers={
+                'Authorization': 'Bearer {}'.format(self._spotify_access_token)
+            }
+        )
+        print('URL REQUESTED: {}'.format(response.url))
+
+        if response.ok:
+            # Grab the response data.
+            response_data = response.json()
+
+            # Parse the artist's album(s).
+            albums_data = self._parse_artist_albums(
+                response_data=response_data
+            )
+            return albums_data
+        else:
+            print('Error {}: {}'.format(response.status_code, response.text))
+
+    def _parse_artist_albums(self, response_data: dict) -> List[dict]:
+        """Given a Spotify Artist's Album(s) array wrapped in a paging object, grab the data you need. (tracks included)
+
+        https://developer.spotify.com/documentation/web-api/reference/object-model/#album-object-simplified
+
+        https://developer.spotify.com/documentation/web-api/reference/object-model/#paging-object
+        """
+        albums = response_data['items']
+
+        for album in albums:
+            album['tracks'] = self.get_album_tracks(
+                album_id=album['id']
+            )
+
+        return albums
+
+    def get_album_tracks(self, album_id: str) -> List[dict]:
+        # Get full url.
+        full_url = 'https://api.spotify.com/v1/albums/{id}/tracks'.format(
+            id=album_id)
+
+        # Grab the response.
+        response = requests.get(
+            url=full_url,
+            params={
+                'limit': 50
+            },
+            headers={
+                'Authorization': 'Bearer {}'.format(self._spotify_access_token)
+            }
+        )
+        print('URL REQUESTED: {}'.format(response.url))
+
+        if response.ok:
+            # Grab the response data.
+            response_data = response.json()
+
+            # Parse the album's tracks.
+            tracks = self._parse_album_tracks(
+                response_data=response_data
+            )
+
+            return tracks
+        else:
+            print('Error {}: {}'.format(response.status_code, response.text))
+
+    def _parse_album_tracks(self, response_data: dict) -> List[dict]:
+        tracks = response_data['items']
+
+        return tracks
