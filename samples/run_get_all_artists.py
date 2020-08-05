@@ -24,6 +24,7 @@ from pprint import pprint
 import requests
 
 from typing import Set
+from typing import List
 
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -46,8 +47,21 @@ sp = spotipy.Spotify(auth_manager=auth_manager)
 # Create a set of the Billboard artists' Spotify IDs.
 spotify_ids: Set[str] = set()
 
+for top_artist_name in top_artists_names:
+    
+    # Make query URL-safe (replace space with +).
+    query = top_artist_name.replace(' ', '+')
 
-for top_artist_name in top_artist_names:
     # Search for the artist by name.
-    search_result = sp.
+    search_result: List[dict] = sp.search(
+        q=query,
+        type='artist'
+    )['artists']['items']
+    
+    # Check if search result is not empty.
+    if search_result:
+        # If so, grab the first result's Spotify ID.
+        spotify_ids.add(search_result[0]['id'])
+
+pprint(spotify_ids)
 
