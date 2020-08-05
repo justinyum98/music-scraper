@@ -26,7 +26,8 @@ setup(
         'beautifulsoup4>=4.9.1',
         'python-dateutil>=2.8.1',
         'pymongo>=3.10.1',
-        'mongoengine>=0.20.0'
+        'mongoengine>=0.20.0',
+        'spotipy>=2.13.0'
     ],
 
     keywords='music',
