@@ -70,7 +70,7 @@ pprint(spotify_ids)
 
 
 ##### GET ALL RELEVANT ARTIST SPOTIFY IDS #####
-def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str]) -> Set[str]:
+def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str], depth = 0, depth_limit = 100) -> Set[str]:
     """Given an artist's Spotify ID, get all 'relevant' artists' Spotify IDs.
     'Relevant' being:
     - Co-artist on albums/singles
@@ -85,6 +85,12 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str]) -> Set[s
     """
 
     added_artist_ids_copy = added_artist_ids.copy()
+
+    if depth >= depth_limit:
+        print('Depth exceeded depth limit ', depth_limit)
+        return added_artist_ids_copy
+
+    print('artist amt:', len(added_artist_ids_copy))
 
     # Grab the artist's albums
     artist_albums: List[dict] = sp.artist_albums(
@@ -104,13 +110,19 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str]) -> Set[s
             if album_artist['id'] not in added_artist_ids_copy:
                 # Add the id.
                 added_artist_ids_copy.add(album_artist['id'])
-                # Grab the artist's relevant artists, get the union, update the added artist ids.
-                added_artist_ids_copy = added_artist_ids_copy.union(
-                    get_relevant_artist_ids(
-                        artist_id=album_artist['id'],
-                        added_artist_ids=added_artist_ids_copy
+                print('Adding new artist: ' + album_artist['name'])
+                
+                # If the depth doesn't exceed 10...
+                if depth + 1 < depth_limit:
+                    # Grab the artist's relevant artists, get the union, update the added artist ids.
+                    added_artist_ids_copy = added_artist_ids_copy.union(
+                        get_relevant_artist_ids(
+                            artist_id=album_artist['id'],
+                            added_artist_ids=added_artist_ids_copy,
+                            depth=depth+1,
+                            depth_limit=depth_limit
+                        )
                     )
-                )
 
         # Grab the album's tracks.
         album_tracks: List[dict] = sp.album_tracks(
@@ -128,13 +140,19 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str]) -> Set[s
                 if track_artist['id'] not in added_artist_ids_copy:
                     # Add the id.
                     added_artist_ids_copy.add(track_artist['id'])
-                    # Grab the artist's relevant artists, get the union, update the added artist ids.
-                    added_artist_ids_copy = added_artist_ids_copy.union(
-                        get_relevant_artist_ids(
-                            artist_id=track_artist['id'],
-                            added_artist_ids=added_artist_ids_copy
+                    print('Adding new artist: ' + track_artist['name'])
+
+                    # If the depth doesn't exceed 10...
+                    if depth + 1 < depth_limit:
+                        # Grab the artist's relevant artists, get the union, update the added artist ids.
+                        added_artist_ids_copy = added_artist_ids_copy.union(
+                            get_relevant_artist_ids(
+                                artist_id=track_artist['id'],
+                                added_artist_ids=added_artist_ids_copy,
+                                depth=depth+1,
+                                depth_limit=depth_limit
+                            )
                         )
-                    )
 
     # Grab the artist's singles.
     artist_singles: List[dict] = sp.artist_albums(
@@ -154,13 +172,19 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str]) -> Set[s
             if single_artist['id'] not in added_artist_ids_copy:
                 # Add the id
                 added_artist_ids_copy.add(single_artist['id'])
-                # Grab the artist's relevant artists, get the union, update the added artist ids.
-                added_artist_ids_copy = added_artist_ids_copy.union(
-                    get_relevant_artist_ids(
-                        artist_id=single_artist['id'],
-                        added_artist_ids=added_artist_ids_copy
+                print('Adding new artist: ' + single_artist['name'])
+
+                # If the depth doesn't exceed 10...
+                if depth + 1 < depth_limit:
+                    # Grab the artist's relevant artists, get the union, update the added artist ids.
+                    added_artist_ids_copy = added_artist_ids_copy.union(
+                        get_relevant_artist_ids(
+                            artist_id=single_artist['id'],
+                            added_artist_ids=added_artist_ids_copy,
+                            depth=depth+1,
+                            depth_limit=depth_limit
+                        )
                     )
-                )
 
         # Grab the single's tracks.
         single_tracks: List[dict] = sp.album_tracks(
@@ -171,43 +195,52 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str]) -> Set[s
         for single_track in single_tracks:
             # Grab the track's artists.
             track_artists: List[dict] = single_track['artists']
-            
+
             # Iterate through the track's artists.
             for track_artist in track_artists:
                 # If the id is not recorded...
                 if track_artist['id'] not in added_artist_ids_copy:
                     # Add the id.
                     added_artist_ids_copy.add(track_artist['id'])
-                    # Grab the artist's relevant artists, get the union, update the added artist ids.
-                    added_artist_ids_copy = added_artist_ids_copy.union(
-                        get_relevant_artist_ids(
-                            artist_id=track_artist['id'],
-                            added_artist_ids=added_artist_ids_copy
+                    print('Adding new artist: ' + track_artist['name'])
+
+                    # If the depth doesn't exceed limit...
+                    if depth + 1 < depth_limit:
+                        # Grab the artist's relevant artists, get the union, update the added artist ids.
+                        added_artist_ids_copy = added_artist_ids_copy.union(
+                            get_relevant_artist_ids(
+                                artist_id=track_artist['id'],
+                                added_artist_ids=added_artist_ids_copy,
+                                depth=depth+1,
+                                depth_limit=depth_limit
+                            )
                         )
-                    )
 
-
-    # Grab an artist's related artists.
-    related_artists: List[dict] = sp.artist_related_artists(
-        artist_id=artist_id
-    )['artists']
-
-    # Iterate through the artist's related artists.
-    for related_artist in related_artists:
-        # If the id is not recorded...
-        if related_artist['id'] not in added_artist_ids_copy:
-            # Add the id.
-            added_artist_ids_copy.add(related_artist['id'])
-            # Grab the artist's relevant artists, get the union, update the added artist ids.
-            added_artist_ids_copy = added_artist_ids_copy.union(
-                get_relevant_artist_ids(
-                    artist_id=related_artist['id'],
-                    added_artist_ids=added_artist_ids_copy
-                )
-            )
+    # TODO: Testing the algorithm without related artists, see if that works.
+    # # Grab an artist's related artists.
+    # related_artists: List[dict] = sp.artist_related_artists(
+    #     artist_id=artist_id
+    # )['artists']
+    
+    # # Iterate through the artist's related artists.
+    # for related_artist in related_artists:
+    #     # If the id is not recorded...
+    #     if related_artist['id'] not in added_artist_ids_copy:
+    #         # Add the id.
+    #         added_artist_ids_copy.add(related_artist['id'])
+    #         print('Adding new artist: ' + related_artist['name'])
+    #         # Grab the artist's relevant artists, get the union, update the added artist ids.
+    #         added_artist_ids_copy = added_artist_ids_copy.union(
+    #             get_relevant_artist_ids(
+    #                 artist_id=related_artist['id'],
+    #                 added_artist_ids=added_artist_ids_copy
+    #             )
+    #         )
 
     # Return the result.
     return added_artist_ids_copy
+
+##### END OF ALGORITHM #####
 
 
 all_spotify_ids = spotify_ids.copy()
@@ -219,8 +252,14 @@ for artist_id in spotify_ids:
     # Grab relevant artist ids.
     relevant_artist_ids = get_relevant_artist_ids(
         artist_id=artist_id,
-        added_artist_ids=added_spotify_ids
+        added_artist_ids=added_spotify_ids,
+        depth_limit=1
     )
 
     # Get the union of the two sets.
     all_spotify_ids = all_spotify_ids.union(relevant_artist_ids)
+
+pprint(all_spotify_ids)
+
+##### NOW, TO GRAB ARTISTS, ALBUMS, SONGS, AND STORE THEM IN DATABASE #####
+
