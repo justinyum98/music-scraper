@@ -19,19 +19,22 @@ for top_artist_name in top_artist_names:
 
 print result
 """
+import time
 import json
 from pprint import pprint
-import requests
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 
 from typing import Set
 from typing import List
 
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
-
 from music_scraper.billboard import BillboardScraper
 
 ##### GET BILLBOARD TOP ARTIST NAMES #####
+print("--- Getting Billboard Top 100 Artists ---")
+# Record the start time.
+start_time = time.time()
+
 # Initialize the Billboard scraper.
 billboard_scraper = BillboardScraper()
 
@@ -39,10 +42,15 @@ billboard_scraper = BillboardScraper()
 top_artists_names = billboard_scraper.get_top_artists_names(
     last_x_weeks=2
 )
-pprint(top_artists_names)
 
+# End time.
+print("--- %s seconds ---" % (time.time() - start_time))
 
 ##### GET BILLBOARD TOP ARTIST SPOTIFY IDS #####
+print("--- Getting Spotify Artists off Billboard Top 100 Artists ---")
+# Record the start time.
+start_time = time.time()
+
 # Initialize Spotify Client with Client Credentials Flow
 auth_manager = SpotifyClientCredentials()
 sp = spotipy.Spotify(auth_manager=auth_manager)
@@ -66,31 +74,40 @@ for top_artist_name in top_artists_names:
         # If so, grab the first result's Spotify ID.
         spotify_ids.add(search_result[0]['id'])
 
-pprint(spotify_ids)
-
+# End time.
+print("--- %s seconds ---" % (time.time() - start_time))
 
 ##### GET ALL RELEVANT ARTIST SPOTIFY IDS #####
-def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str], depth = 0, depth_limit = 100) -> Set[str]:
-    """Given an artist's Spotify ID, get all 'relevant' artists' Spotify IDs.
+print("--- Getting relevant artists ---")
+# Record the start time.
+start_time = time.time()
+
+def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str], depth = 0, depth_limit = 1000) -> Set[str]:
+    """
+    Description:
+    ------------
+    Given an artist's Spotify ID, get all 'relevant' artists' Spotify IDs.
     'Relevant' being:
     - Co-artist on albums/singles
     - Featured in tracks
     - Spotify's recommended related artists.
 
-    Args:
-        artist_id (str): Spotify ID of artist.
+    Arguments:
+    ----------
+    artist_id (str): Spotify ID of artist.
+    added_artist_ids (Set[str]): The list of artist IDs.
+    depth (int): The recursion depth.
+    depth_limit (int): The recursion depth limit.
 
     Returns:
-        Set[str]: Set containing all relevant artist Spotify IDs.
+    --------
+    Set[str]: Set containing all relevant artist Spotify IDs.
     """
 
     added_artist_ids_copy = added_artist_ids.copy()
 
-    if depth >= depth_limit:
-        print('Depth exceeded depth limit ', depth_limit)
+    if depth > depth_limit:
         return added_artist_ids_copy
-
-    print('artist amt:', len(added_artist_ids_copy))
 
     # Grab the artist's albums
     artist_albums: List[dict] = sp.artist_albums(
@@ -110,7 +127,6 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str], depth = 
             if album_artist['id'] not in added_artist_ids_copy:
                 # Add the id.
                 added_artist_ids_copy.add(album_artist['id'])
-                print('Adding new artist: ' + album_artist['name'])
                 
                 # If the depth doesn't exceed 10...
                 if depth + 1 < depth_limit:
@@ -140,7 +156,6 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str], depth = 
                 if track_artist['id'] not in added_artist_ids_copy:
                     # Add the id.
                     added_artist_ids_copy.add(track_artist['id'])
-                    print('Adding new artist: ' + track_artist['name'])
 
                     # If the depth doesn't exceed 10...
                     if depth + 1 < depth_limit:
@@ -172,7 +187,6 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str], depth = 
             if single_artist['id'] not in added_artist_ids_copy:
                 # Add the id
                 added_artist_ids_copy.add(single_artist['id'])
-                print('Adding new artist: ' + single_artist['name'])
 
                 # If the depth doesn't exceed 10...
                 if depth + 1 < depth_limit:
@@ -202,7 +216,6 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str], depth = 
                 if track_artist['id'] not in added_artist_ids_copy:
                     # Add the id.
                     added_artist_ids_copy.add(track_artist['id'])
-                    print('Adding new artist: ' + track_artist['name'])
 
                     # If the depth doesn't exceed limit...
                     if depth + 1 < depth_limit:
@@ -239,9 +252,7 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str], depth = 
 
     # Return the result.
     return added_artist_ids_copy
-
 ##### END OF ALGORITHM #####
-
 
 all_spotify_ids = spotify_ids.copy()
 
@@ -253,13 +264,55 @@ for artist_id in spotify_ids:
     relevant_artist_ids = get_relevant_artist_ids(
         artist_id=artist_id,
         added_artist_ids=added_spotify_ids,
+        # ! Set the depth here.
         depth_limit=1
     )
 
     # Get the union of the two sets.
     all_spotify_ids = all_spotify_ids.union(relevant_artist_ids)
 
-pprint(all_spotify_ids)
+# End time.
+print("--- %s seconds ---" % (time.time() - start_time))
 
-##### NOW, TO GRAB ARTISTS, ALBUMS, SONGS, AND STORE THEM IN DATABASE #####
+##### NOW, TO GRAB ARTISTS #####
+"""
+Now, to store the data in the database:
+(Pseudocode)
 
+# Get artists.
+artists = {}
+
+for spotify_id in all_spotify_ids:
+    get artist with 'spotify_id'
+    append artist to 'artists' (key=spotify_id, value=artist)
+"""
+print('--- Getting all artists ---')
+# Record the start time.
+start_time = time.time()
+
+# Initialize list of artists.
+artists = {}
+
+# Iterate through artist Spotify IDs.
+for spotify_id in all_spotify_ids:
+
+    # Grab artist.
+    artist = sp.artist(artist_id=spotify_id)
+
+    # Grab data from artist.
+    mini_dict = {}
+    mini_dict['name'] = artist['name']
+    mini_dict['spotify_id'] = artist['id']
+    if artist['images']:
+        mini_dict['profile_picture_url'] = artist['images'][0]['url']
+    mini_dict['genres'] = artist['genres']
+
+    # Append data to artists.
+    artists[spotify_id] = mini_dict
+
+# End time.
+print("--- %s seconds ---" % (time.time() - start_time))
+
+# Save the Spotify artists.
+with open('samples/responses/spotify_artists.jsonc', 'w+') as spotify_artists_file:
+    json.dump(obj=artists, fp=spotify_artists_file, indent=2)
