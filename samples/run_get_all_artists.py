@@ -21,7 +21,6 @@ print result
 """
 import time
 import json
-from pprint import pprint
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
