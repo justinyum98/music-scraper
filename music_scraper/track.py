@@ -1,12 +1,13 @@
 import mongoengine
 
 
-class Song(mongoengine.Document):
+class Track(mongoengine.Document):
     title = mongoengine.StringField(
         required=True
     )
     spotifyId = mongoengine.StringField(
-        default=None
+        default=None,
+        unique=True
     )
     description = mongoengine.StringField(
         default=None
@@ -26,7 +27,10 @@ class Song(mongoengine.Document):
     artists = mongoengine.ListField(
         mongoengine.ReferenceField('Artist')
     )
-    album = mongoengine.ReferenceField('Album')
+    album = mongoengine.ReferenceField(
+        'Album',
+        default=None
+    )
     posts = mongoengine.ListField(
         mongoengine.ReferenceField('Post')
     )
@@ -36,3 +40,6 @@ class Song(mongoengine.Document):
     likers = mongoengine.ListField(
         mongoengine.ReferenceField('User')
     )
+    meta = {
+        'collection': 'tracks'
+    }

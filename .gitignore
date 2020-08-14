@@ -3,3 +3,9 @@
 
 # Virtual Environment
 .venv
+
+# DS Store
+.DS_Store
+
+# .env file
+.env

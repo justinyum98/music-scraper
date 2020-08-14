@@ -3,12 +3,12 @@ import mongoengine
 
 class Artist(mongoengine.Document):
     name = mongoengine.StringField(
-        required=True,
-        unique=True,
+        required=True
     )
     user = mongoengine.ReferenceField('User')
     spotifyId = mongoengine.StringField(
-        default=None
+        default=None,
+        unique=True
     )
     biography = mongoengine.StringField(
         default=None
@@ -29,3 +29,6 @@ class Artist(mongoengine.Document):
         default=0
     )
     likers = mongoengine.ReferenceField('User')
+    meta = {
+        'collection': 'artists'
+    }

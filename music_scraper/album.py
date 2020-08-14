@@ -6,7 +6,8 @@ class Album(mongoengine.Document):
         required=True
     )
     spotifyId = mongoengine.StringField(
-        default=None
+        default=None,
+        unique=True
     )
     description = mongoengine.StringField(
         default=None
@@ -14,14 +15,18 @@ class Album(mongoengine.Document):
     coverArtUrl = mongoengine.URLField(
         default=None
     )
-    albumType = mongoengine.StringField()
+    albumType = mongoengine.StringField(
+        required=True
+    )
     artists = mongoengine.ListField(
         mongoengine.ReferenceField('Artist')
     )
     tracks = mongoengine.ListField(
         mongoengine.ReferenceField('Song')
     )
-    releaseDate = mongoengine.DateField()
+    releaseDate = mongoengine.StringField(
+        default=None
+    )
     posts = mongoengine.ListField(
         mongoengine.ReferenceField('Post')
     )
@@ -31,3 +36,6 @@ class Album(mongoengine.Document):
     likers = mongoengine.ListField(
         mongoengine.ReferenceField('User')
     )
+    meta = {
+        'collection': 'albums'
+    }
