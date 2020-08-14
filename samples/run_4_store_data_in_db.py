@@ -1,18 +1,5 @@
 """
 Script for storing artists, albums, and tracks in database.
-
-(Pseudocode)
-
-# Get artist_data from json file.
-artists_data: dict
-
-for artist_id in artists_data:
-    # Get the artist
-    artist = artists_data[artist_id]
-    
-    # Create the artist
-    artist_doc_id = 
-
 """
 import os
 import json
