@@ -28,7 +28,9 @@ class Artist(mongoengine.Document):
     likes = mongoengine.IntField(
         default=0
     )
-    likers = mongoengine.ReferenceField('User')
+    likers = mongoengine.ListField(
+        mongoengine.ReferenceField('User')
+    )
     meta = {
         'collection': 'artists'
     }

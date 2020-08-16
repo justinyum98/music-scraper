@@ -22,7 +22,7 @@ class Album(mongoengine.Document):
         mongoengine.ReferenceField('Artist')
     )
     tracks = mongoengine.ListField(
-        mongoengine.ReferenceField('Song')
+        mongoengine.ReferenceField('Track')
     )
     releaseDate = mongoengine.StringField(
         default=None
