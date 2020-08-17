@@ -140,7 +140,8 @@ def check_if_track_contains_artist(artist_id, track_doc: Track) -> bool:
         
 
 print('Starting script.')
-for artist_id in artists_data:
+for index, artist_id in enumerate(artists_data):
+    print('Getting {} artist'.format(index + 1))
     # Get the artist
     artist: dict = artists_data[artist_id]
 
