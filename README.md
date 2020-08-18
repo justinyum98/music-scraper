@@ -5,7 +5,6 @@ Music Scraper is a Python application that can grab top artists' data (albums, t
 * [Introduction](#introduction)
 * [Technologies](#technologies)
 * [Setup](#setup)
-* [Usage](#usage)
 
 ## Introduction
 Music Scraper is a Python application that can...
