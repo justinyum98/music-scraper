@@ -125,3 +125,6 @@ There are five scripts that you must run in a specific order.
 
 ## Contact Me
 If you have any questions, need help, or just want to chat, feel free to shoot me an email at `justinyum98@gmail.com`.
+
+# License
+[MIT](LICENSE.md)
