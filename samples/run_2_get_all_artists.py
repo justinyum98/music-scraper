@@ -228,26 +228,25 @@ def get_relevant_artist_ids(artist_id: str, added_artist_ids: Set[str], depth = 
                             )
                         )
 
-    # TODO: Testing the algorithm without related artists, see if that works.
-    # # Grab an artist's related artists.
-    # related_artists: List[dict] = sp.artist_related_artists(
-    #     artist_id=artist_id
-    # )['artists']
+    # Grab an artist's related artists.
+    related_artists: List[dict] = sp.artist_related_artists(
+        artist_id=artist_id
+    )['artists']
     
-    # # Iterate through the artist's related artists.
-    # for related_artist in related_artists:
-    #     # If the id is not recorded...
-    #     if related_artist['id'] not in added_artist_ids_copy:
-    #         # Add the id.
-    #         added_artist_ids_copy.add(related_artist['id'])
-    #         print('Adding new artist: ' + related_artist['name'])
-    #         # Grab the artist's relevant artists, get the union, update the added artist ids.
-    #         added_artist_ids_copy = added_artist_ids_copy.union(
-    #             get_relevant_artist_ids(
-    #                 artist_id=related_artist['id'],
-    #                 added_artist_ids=added_artist_ids_copy
-    #             )
-    #         )
+    # Iterate through the artist's related artists.
+    for related_artist in related_artists:
+        # If the id is not recorded...
+        if related_artist['id'] not in added_artist_ids_copy:
+            # Add the id.
+            added_artist_ids_copy.add(related_artist['id'])
+            print('Adding new artist: ' + related_artist['name'])
+            # Grab the artist's relevant artists, get the union, update the added artist ids.
+            added_artist_ids_copy = added_artist_ids_copy.union(
+                get_relevant_artist_ids(
+                    artist_id=related_artist['id'],
+                    added_artist_ids=added_artist_ids_copy
+                )
+            )
 
     # Return the result.
     return added_artist_ids_copy
